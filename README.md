@@ -1,6 +1,6 @@
 # GachaSimServer
 
-This is the **server-side** repository for the Gacha Simulation project 🎰  
+This is the **server-side** repository for the Gacha Simulation project   
 It works together with the [GachaSim client](https://github.com/ponlawat30109/GachaSim) to provide a complete backend/frontend experience.
 
 ## 📦 Purpose
