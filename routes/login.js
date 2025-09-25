@@ -1,14 +1,24 @@
 import { Router } from "express";
-const router = Router();
 import { query } from "../config.js";
+const router = Router();
+
+async function getUserByName(username) {
+  const [rows] = await query("SELECT * FROM users WHERE name = ?", [username]);
+  return rows;
+}
+
+async function getInventory(userId) {
+  const [inventoryRows] = await query(
+    "SELECT id, item_id, quantity FROM user_inventory WHERE user_id = ?",
+    [userId]
+  );
+  return inventoryRows;
+}
 
 router.post("/", async (req, res) => {
-  console.log("BODY:", req.body);
   const { username } = req.body;
   try {
-    const [rows] = await query("SELECT * FROM users WHERE name = ?", [
-      username,
-    ]);
+    let rows = await getUserByName(username);
     let userData, userId;
     if (rows.length === 0) {
       const result = await query(
@@ -16,10 +26,7 @@ router.post("/", async (req, res) => {
         [username]
       );
       userId = result.insertId;
-      userData = {
-        name: username,
-        gacha_remaining: 100,
-      };
+      userData = { name: username, gacha_remaining: 100 };
     } else {
       userId = rows[0].id;
       userData = {
@@ -27,12 +34,8 @@ router.post("/", async (req, res) => {
         gacha_remaining: rows[0].gacha_remaining,
       };
     }
-
-    const [inventoryRows] = await query(
-      "SELECT id, item_id, quantity FROM user_inventory WHERE user_id = ?",
-      [userId]
-    );
-    res.json({ success: true, user: userData, inventory: inventoryRows });
+    const inventory = await getInventory(userId);
+    res.json({ success: true, user: userData, inventory });
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     res.status(500).json({ error: err.message });
@@ -42,9 +45,7 @@ router.post("/", async (req, res) => {
 router.get("/refresh", async (req, res) => {
   const { username } = req.query;
   try {
-    const [rows] = await query("SELECT * FROM users WHERE name = ?", [
-      username,
-    ]);
+    let rows = await getUserByName(username);
     if (rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -53,11 +54,8 @@ router.get("/refresh", async (req, res) => {
       name: rows[0].name,
       gacha_remaining: rows[0].gacha_remaining,
     };
-    const [inventoryRows] = await query(
-      "SELECT id, item_id, quantity FROM user_inventory WHERE user_id = ?",
-      [userId]
-    );
-    res.json({ success: true, user: userData, inventory: inventoryRows });
+    const inventory = await getInventory(userId);
+    res.json({ success: true, user: userData, inventory });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
