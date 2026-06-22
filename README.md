@@ -1,48 +1,33 @@
-# GachaSim microservices
+# GachaSimServer
 
-The backend now runs as three independent processes:
+Microservice backend for the GachaSim project.
 
-- API gateway (`3000`): public API and Socket.IO.
-- User service (`3001`): login, user creation, and inventory reads.
-- Gacha service (`3002`): transactional pulls and rare-pull events.
+## Services
 
-Existing client routes remain unchanged: `POST /login`,
-`GET /login/refresh`, and `POST /gacha/pull`.
+- API gateway and Socket.IO: port `3000`
+- User service: internal port `3001`
+- Gacha service: internal port `3002`
+- MySQL database
 
-## Run
+## Setup
 
-```sh
-npm install
-npm start
-```
+Copy `.env.example` to `.env`, set secure values, then run:
 
-Services can run separately with `npm run start:gateway`,
-`npm run start:user`, and `npm run start:gacha`.
-
-## Environment variables
-
-`GATEWAY_PORT`, `USER_SERVICE_PORT`, `GACHA_SERVICE_PORT`,
-`USER_SERVICE_URL`, `GACHA_SERVICE_URL`, `GATEWAY_INTERNAL_URL`,
-`INTERNAL_API_KEY`, `CORS_ORIGIN`, `DB_HOST`, `DB_PORT`, `DB_USER`,
-`DB_PASSWORD`, `DB_NAME`, and `DB_CONNECTION_LIMIT` are supported.
-
-Defaults match the original local setup. Set a strong `INTERNAL_API_KEY`
-outside local development and import the SQL files in `database/` first.
-
-## Docker
-
-From the project root, double-click `run_docker.bat`, or run:
-
-```sh
-cd server
+```bash
 docker compose up --build
 ```
 
-The Compose stack starts MySQL and all three services. The public API remains
-available at `http://localhost:3000`. Copy `.env.example` to `.env` to customize
-passwords, the gateway port, the internal API key, or CORS. MySQL is only
-available to containers inside the Docker network, avoiding conflicts with a
-locally installed MySQL server on port `3306`.
+The public API is available at `http://localhost:3000`.
 
-Stop the stack with `Ctrl+C`. Remove containers with `docker compose down`.
-To also erase the Docker database, use `docker compose down -v`.
+## Clients
+
+- Unity client: [GachaSim](https://github.com/ponlawat30109/GachaSim)
+- Web client: [GachaSimWeb](https://github.com/ponlawat30109/GachaSimWeb)
+
+## Stop
+
+```bash
+docker compose down
+```
+
+Use `docker compose down -v` to also delete the database volume.
