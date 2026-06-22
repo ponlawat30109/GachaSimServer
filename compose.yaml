@@ -1,0 +1,67 @@
+services:
+  database:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${DB_NAME:-gacha_game}
+      MYSQL_USER: ${DB_USER:-gacha_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/gacha_game_users.sql:/docker-entrypoint-initdb.d/01-users.sql:ro
+      - ./database/gacha_game_items.sql:/docker-entrypoint-initdb.d/02-items.sql:ro
+      - ./database/gacha_game_user_inventory.sql:/docker-entrypoint-initdb.d/03-inventory.sql:ro
+      - ./database/gacha_game_history.sql:/docker-entrypoint-initdb.d/04-history.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  gateway:
+    build: .
+    restart: unless-stopped
+    command: ["npm", "run", "start:gateway"]
+    environment:
+      GATEWAY_PORT: 3000
+      USER_SERVICE_URL: http://user-service:3001
+      GACHA_SERVICE_URL: http://gacha-service:3002
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+    ports:
+      - "${GATEWAY_PORT:-3000}:3000"
+    depends_on:
+      user-service:
+        condition: service_started
+      gacha-service:
+        condition: service_started
+
+  user-service:
+    build: .
+    restart: unless-stopped
+    command: ["npm", "run", "start:user"]
+    environment: &service-environment
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-gacha_app}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      DB_NAME: ${DB_NAME:-gacha_game}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  gacha-service:
+    build: .
+    restart: unless-stopped
+    command: ["npm", "run", "start:gacha"]
+    environment:
+      <<: *service-environment
+      GATEWAY_INTERNAL_URL: http://gateway:3000
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  mysql-data:

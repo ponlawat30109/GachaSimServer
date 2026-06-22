@@ -1,21 +1,48 @@
-# GachaSimServer
+# GachaSim microservices
 
-This is the **server-side** repository for the Gacha Simulation project   
-It works together with the [GachaSim client](https://github.com/ponlawat30109/GachaSim) to provide a complete backend/frontend experience.
+The backend now runs as three independent processes:
 
-## Purpose
-This repo contains the backend logic, APIs, and data handling for the Gacha system.  
-It should be deployed separately and configured to communicate with the client application.
+- API gateway (`3000`): public API and Socket.IO.
+- User service (`3001`): login, user creation, and inventory reads.
+- Gacha service (`3002`): transactional pulls and rare-pull events.
 
-## Deployment & Configuration
-After deploying the server (e.g., to a cloud platform or VPS), make sure to:
+Existing client routes remain unchanged: `POST /login`,
+`GET /login/refresh`, and `POST /gacha/pull`.
 
-- Edit config.js to match your environment. This includes updating the database connection settings like host, user, password, and database name
-- **Don't forget to edit `config.js`** to match your deployment settings (e.g., database URI, allowed origins, etc.)
-- **The database is located in the `/database` folder** — make sure to deploy and configure it properly before starting the server
-- Make sure your MySQL server is running and the gacha_game database is created before starting the app.
-- Ensure the deployed server is publicly accessible
-- Update the client-side configuration to point to the correct server URL
+## Run
 
-## Related Repository
-- **Client-side repo**: [GachaSim](https://github.com/ponlawat30109/GachaSim)
+```sh
+npm install
+npm start
+```
+
+Services can run separately with `npm run start:gateway`,
+`npm run start:user`, and `npm run start:gacha`.
+
+## Environment variables
+
+`GATEWAY_PORT`, `USER_SERVICE_PORT`, `GACHA_SERVICE_PORT`,
+`USER_SERVICE_URL`, `GACHA_SERVICE_URL`, `GATEWAY_INTERNAL_URL`,
+`INTERNAL_API_KEY`, `CORS_ORIGIN`, `DB_HOST`, `DB_PORT`, `DB_USER`,
+`DB_PASSWORD`, `DB_NAME`, and `DB_CONNECTION_LIMIT` are supported.
+
+Defaults match the original local setup. Set a strong `INTERNAL_API_KEY`
+outside local development and import the SQL files in `database/` first.
+
+## Docker
+
+From the project root, double-click `run_docker.bat`, or run:
+
+```sh
+cd server
+docker compose up --build
+```
+
+The Compose stack starts MySQL and all three services. The public API remains
+available at `http://localhost:3000`. Copy `.env.example` to `.env` to customize
+passwords, the gateway port, the internal API key, or CORS. MySQL is only
+available to containers inside the Docker network, avoiding conflicts with a
+locally installed MySQL server on port `3306`.
+
+Stop the stack with `Ctrl+C`. Remove containers with `docker compose down`.
+To also erase the Docker database, use `docker compose down -v`.

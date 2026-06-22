@@ -1,16 +1,16 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "description": "",
+  "name": "gachasim-microservices",
+  "version": "2.0.0",
+  "private": true,
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "check": "node --check server.js && node --check src/gateway/index.js && node --check src/user-service/index.js && node --check src/gacha-service/index.js",
+    "start": "node src/start-all.js",
+    "start:gateway": "node src/gateway/index.js",
+    "start:user": "node src/user-service/index.js",
+    "start:gacha": "node src/gacha-service/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
